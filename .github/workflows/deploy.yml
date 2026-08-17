@@ -1,0 +1,154 @@
+name: CD - Deploy to Testnet & Vercel
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      deploy_contracts:
+        description: 'Deploy smart contracts to testnet'
+        required: false
+        default: true
+        type: boolean
+      deploy_frontend:
+        description: 'Deploy frontend to Vercel'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  CARGO_TERM_COLOR: always
+  STELLAR_NETWORK: testnet
+
+jobs:
+  # ============================================
+  # Job 1: Deploy Contracts to Testnet
+  # ============================================
+  deploy-contracts:
+    name: 🚀 Deploy Contracts
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || github.event.inputs.deploy_contracts == 'true' }}
+    outputs:
+      token_id: ${{ steps.deploy.outputs.token_id }}
+      oracle_id: ${{ steps.deploy.outputs.oracle_id }}
+      pool_id: ${{ steps.deploy.outputs.pool_id }}
+      governance_id: ${{ steps.deploy.outputs.governance_id }}
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🦀 Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: 📦 Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-deploy-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: 🔧 Install Stellar CLI
+        run: |
+          cargo install stellar-cli --locked || true
+          stellar --version
+
+      - name: 🔨 Build contracts
+        run: |
+          cargo build --release --target wasm32-unknown-unknown -p stellar-lend-token
+          cargo build --release --target wasm32-unknown-unknown -p stellar-lend-price-oracle
+          cargo build --release --target wasm32-unknown-unknown -p stellar-lend-lending-pool
+          cargo build --release --target wasm32-unknown-unknown -p stellar-lend-governance
+
+      - name: 🚀 Deploy to testnet
+        id: deploy
+        env:
+          STELLAR_SECRET_KEY: ${{ secrets.STELLAR_SECRET_KEY }}
+        run: |
+          # Generate deployer identity if no secret provided
+          if [ -z "$STELLAR_SECRET_KEY" ]; then
+            stellar keys generate deployer --network testnet --fund
+            DEPLOYER="deployer"
+          else
+            echo "$STELLAR_SECRET_KEY" | stellar keys add deployer --secret-key
+            DEPLOYER="deployer"
+          fi
+
+          # Deploy Token Contract
+          TOKEN_ID=$(stellar contract deploy \
+            --wasm target/wasm32-unknown-unknown/release/stellar_lend_token.wasm \
+            --source $DEPLOYER \
+            --network testnet)
+          echo "token_id=$TOKEN_ID" >> $GITHUB_OUTPUT
+          echo "✅ Token deployed: $TOKEN_ID"
+
+          # Deploy Price Oracle
+          ORACLE_ID=$(stellar contract deploy \
+            --wasm target/wasm32-unknown-unknown/release/stellar_lend_price_oracle.wasm \
+            --source $DEPLOYER \
+            --network testnet)
+          echo "oracle_id=$ORACLE_ID" >> $GITHUB_OUTPUT
+          echo "✅ Oracle deployed: $ORACLE_ID"
+
+          # Deploy Governance
+          GOV_ID=$(stellar contract deploy \
+            --wasm target/wasm32-unknown-unknown/release/stellar_lend_governance.wasm \
+            --source $DEPLOYER \
+            --network testnet)
+          echo "governance_id=$GOV_ID" >> $GITHUB_OUTPUT
+          echo "✅ Governance deployed: $GOV_ID"
+
+          # Deploy Lending Pool
+          POOL_ID=$(stellar contract deploy \
+            --wasm target/wasm32-unknown-unknown/release/stellar_lend_lending_pool.wasm \
+            --source $DEPLOYER \
+            --network testnet)
+          echo "pool_id=$POOL_ID" >> $GITHUB_OUTPUT
+          echo "✅ Lending Pool deployed: $POOL_ID"
+
+          echo "🎉 All contracts deployed successfully!"
+
+  # ============================================
+  # Job 2: Deploy Frontend to Vercel
+  # ============================================
+  deploy-frontend:
+    name: 🌐 Deploy Frontend
+    runs-on: ubuntu-latest
+    needs: deploy-contracts
+    if: ${{ always() && (github.event_name == 'push' || github.event.inputs.deploy_frontend == 'true') }}
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 📥 Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: 🔨 Build frontend
+        working-directory: ./frontend
+        env:
+          NEXT_PUBLIC_TOKEN_CONTRACT_ID: ${{ needs.deploy-contracts.outputs.token_id }}
+          NEXT_PUBLIC_ORACLE_CONTRACT_ID: ${{ needs.deploy-contracts.outputs.oracle_id }}
+          NEXT_PUBLIC_POOL_CONTRACT_ID: ${{ needs.deploy-contracts.outputs.pool_id }}
+          NEXT_PUBLIC_GOVERNANCE_CONTRACT_ID: ${{ needs.deploy-contracts.outputs.governance_id }}
+          NEXT_PUBLIC_STELLAR_NETWORK: testnet
+        run: npm run build
+
+      - name: 🚀 Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./frontend
+          vercel-args: '--prod'

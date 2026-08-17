@@ -1,0 +1,107 @@
+name: CI - Build & Test
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  # ============================================
+  # Job 1: Smart Contract Tests
+  # ============================================
+  contracts-test:
+    name: 🧪 Contract Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🦀 Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: 📦 Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: 🧪 Run contract tests
+        run: cargo test --workspace --verbose
+
+      - name: 🔨 Build WASM contracts
+        run: |
+          cargo build --release --target wasm32-unknown-unknown -p stellar-lend-token
+          cargo build --release --target wasm32-unknown-unknown -p stellar-lend-price-oracle
+          cargo build --release --target wasm32-unknown-unknown -p stellar-lend-lending-pool
+          cargo build --release --target wasm32-unknown-unknown -p stellar-lend-governance
+
+      - name: 📤 Upload WASM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-contracts
+          path: target/wasm32-unknown-unknown/release/*.wasm
+          retention-days: 7
+
+  # ============================================
+  # Job 2: Frontend Tests & Build
+  # ============================================
+  frontend-test:
+    name: 🎨 Frontend Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 🧹 Lint check
+        run: npm run lint
+
+      - name: 🧪 Run tests
+        run: npm test -- --watchAll=false --passWithNoTests
+
+      - name: 🔨 Build frontend
+        run: npm run build
+
+  # ============================================
+  # Job 3: Security Audit
+  # ============================================
+  security-audit:
+    name: 🔒 Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🦀 Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 🔍 Cargo audit
+        run: |
+          cargo install cargo-audit --quiet
+          cargo audit || true
