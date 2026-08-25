@@ -304,14 +304,16 @@ npx vercel --prod
 
 ---
 
-## 📍 Contract Addresses (Testnet)
+## 📍 Contract Addresses & Testnet Identity
 
-| Contract | Address |
-|----------|---------|
-| Token | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2OOTGBD` |
-| Price Oracle | `CCJZ4GFMQ3LQNBQXK3U5QGZJFNLQDBKXMCQRZ6W7PJHVMKXQPQGX7R` |
-| Lending Pool | `CBXBHWHT6KDLY3GIFCPBGDLQHPJSQR5O5NQBERHGOTTM4QRXJZ7HQES` |
-| Governance | `CD7HBJMGTFQY3UHRD6DZYYQHLRX4CJHSXG3L6EACCLK5CVQFZJLHK3B` |
+| Asset / Entity | Address |
+|----------------|---------|
+| **Deployer Account** | `GC3G4AQ5TAG5H7C24QQ25Z2VP5HBNHRR4UBTKRUYB74GYD3AV7IKKMPR` |
+| **Token Contract** | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2OOTGBD` |
+| **Price Oracle** | `CCJZ4GFMQ3LQNBQXK3U5QGZJFNLQDBKXMCQRZ6W7PJHVMKXQPQGX7R` |
+| **Lending Pool** | `CBXBHWHT6KDLY3GIFCPBGDLQHPJSQR5O5NQBERHGOTTM4QRXJZ7HQES` |
+| **Governance** | `CD7HBJMGTFQY3UHRD6DZYYQHLRX4CJHSXG3L6EACCLK5CVQFZJLHK3B` |
+| **Stellar Network** | Testnet (`https://soroban-testnet.stellar.org:443`) |
 
 **Transaction Hash**: `[To be updated after deployment]`
 
