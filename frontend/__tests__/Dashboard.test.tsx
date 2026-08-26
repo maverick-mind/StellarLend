@@ -9,18 +9,37 @@ jest.mock('../src/app/providers', () => ({
     isConnected: true,
     isConnecting: false,
     network: 'testnet',
+    walletType: 'browser',
+    xlmBalance: 10000,
+    tokenBalance: 75000,
+    stakedGovBalance: 15000,
+    isFunding: false,
+    userPosition: {
+      deposited: 50000,
+      borrowed: 25000,
+      healthFactor: 1.42,
+      collateralValue: 50000,
+      borrowLimit: 37500,
+      netAPY: 1.2,
+    },
+    events: [
+      { id: '1', type: 'deposit', user: 'GDXK...M4QR', amount: 5000, token: 'USDC', time: '2 min ago', txHash: 'abc123' },
+      { id: '2', type: 'borrow', user: 'GBXH...W7PJ', amount: 2500, token: 'USDC', time: '5 min ago', txHash: 'def456' },
+    ],
     connect: jest.fn(),
     disconnect: jest.fn(),
+    fundWithFriendbot: jest.fn(),
+    executeTransaction: jest.fn(),
   }),
   useToast: () => ({
     toasts: [],
     addToast: jest.fn(),
     removeToast: jest.fn(),
   }),
-  formatUSD: (n: number) => `$${n.toLocaleString()}`,
-  formatPercent: (n: number) => `${n.toFixed(2)}%`,
-  formatNumber: (n: number, d = 2) => n.toFixed(d),
-  truncateAddress: (addr: string) => `${addr.slice(0, 4)}...${addr.slice(-4)}`,
+  formatUSD: (n: number) => `$${(n || 0).toLocaleString()}`,
+  formatPercent: (n: number) => `${(n || 0).toFixed(2)}%`,
+  formatNumber: (n: number, d = 2) => (n || 0).toFixed(d),
+  truncateAddress: (addr: string) => (addr ? `${addr.slice(0, 4)}...${addr.slice(-4)}` : ''),
   MOCK_POOL_STATE: {
     totalDeposits: 2450000,
     totalBorrows: 1230000,
@@ -29,18 +48,6 @@ jest.mock('../src/app/providers', () => ({
     borrowRate: 4.8,
     supplyRate: 2.1,
   },
-  MOCK_USER_POSITION: {
-    deposited: 50000,
-    borrowed: 25000,
-    healthFactor: 1.42,
-    collateralValue: 50000,
-    borrowLimit: 37500,
-    netAPY: 1.2,
-  },
-  MOCK_EVENTS: [
-    { id: 1, type: 'deposit', user: 'GDXK...M4QR', amount: 5000, token: 'USDC', time: '2 min ago' },
-    { id: 2, type: 'borrow', user: 'GBXH...W7PJ', amount: 2500, token: 'USDC', time: '5 min ago' },
-  ],
 }));
 
 describe('DashboardPage', () => {
@@ -64,7 +71,7 @@ describe('DashboardPage', () => {
 
   it('shows live activity feed', () => {
     render(<DashboardPage />);
-    expect(screen.getByText('Live Activity')).toBeInTheDocument();
-    expect(screen.getByText(/Real-time/)).toBeInTheDocument();
+    expect(screen.getByText(/Live Activity/i)).toBeInTheDocument();
+    expect(screen.getByText(/Real-time/i)).toBeInTheDocument();
   });
 });

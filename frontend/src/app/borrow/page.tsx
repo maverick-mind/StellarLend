@@ -8,50 +8,59 @@ import {
   formatPercent,
   formatNumber,
   MOCK_POOL_STATE,
-  MOCK_USER_POSITION,
 } from "../providers";
 
 export default function BorrowPage() {
-  const { isConnected } = useWallet();
+  const { isConnected, tokenBalance, userPosition, executeTransaction } = useWallet();
   const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState<"borrow" | "repay">("borrow");
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const borrowLimit = MOCK_USER_POSITION.borrowLimit;
-  const currentBorrowed = MOCK_USER_POSITION.borrowed;
-  const available = borrowLimit - currentBorrowed;
+  const borrowLimit = userPosition.borrowLimit;
+  const currentBorrowed = userPosition.borrowed;
+  const available = Math.max(0, borrowLimit - currentBorrowed);
 
-  const simulatedHealthFactor = amount && parseFloat(amount) > 0
-    ? activeTab === "borrow"
-      ? (MOCK_USER_POSITION.deposited * 0.85) /
-        (currentBorrowed + parseFloat(amount))
-      : (MOCK_USER_POSITION.deposited * 0.85) /
-        Math.max(currentBorrowed - parseFloat(amount), 1)
-    : MOCK_USER_POSITION.healthFactor;
+  const simulatedHealthFactor =
+    amount && parseFloat(amount) > 0
+      ? activeTab === "borrow"
+        ? (userPosition.deposited * 0.85) / (currentBorrowed + parseFloat(amount))
+        : (userPosition.deposited * 0.85) / Math.max(currentBorrowed - parseFloat(amount), 1)
+      : userPosition.healthFactor;
 
   const handleSubmit = async () => {
-    if (!amount || parseFloat(amount) <= 0) {
-      addToast("error", "Please enter a valid amount");
+    const numAmount = parseFloat(amount);
+    if (!amount || isNaN(numAmount) || numAmount <= 0) {
+      addToast("error", "Please enter a valid positive amount");
       return;
     }
     if (!isConnected) {
-      addToast("error", "Please connect your wallet first");
+      addToast("error", "Please connect your Stellar wallet first");
       return;
     }
-    if (activeTab === "borrow" && parseFloat(amount) > available) {
-      addToast("error", "Amount exceeds your borrow limit");
+    if (activeTab === "borrow" && numAmount > available) {
+      addToast("error", "Amount exceeds your maximum borrow limit (75% LTV)");
+      return;
+    }
+    if (activeTab === "repay" && numAmount > currentBorrowed) {
+      addToast("error", "Repay amount exceeds total outstanding debt");
       return;
     }
 
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 2000));
-    addToast(
-      "success",
-      `${activeTab === "borrow" ? "Borrowed" : "Repaid"} ${amount} USDC successfully!`
-    );
-    setAmount("");
+    const result = await executeTransaction(activeTab, numAmount);
     setIsLoading(false);
+
+    if (result.success) {
+      addToast(
+        "success",
+        `Successfully ${activeTab === "borrow" ? "borrowed" : "repaid"} ${numAmount.toLocaleString()} USDC!`,
+        result.txHash
+      );
+      setAmount("");
+    } else {
+      addToast("error", result.error || "Transaction failed");
+    }
   };
 
   return (
@@ -67,14 +76,20 @@ export default function BorrowPage() {
           <div className="tab-group">
             <button
               className={`tab ${activeTab === "borrow" ? "active" : ""}`}
-              onClick={() => setActiveTab("borrow")}
+              onClick={() => {
+                setActiveTab("borrow");
+                setAmount("");
+              }}
               id="borrow-tab"
             >
               Borrow
             </button>
             <button
               className={`tab ${activeTab === "repay" ? "active" : ""}`}
-              onClick={() => setActiveTab("repay")}
+              onClick={() => {
+                setActiveTab("repay");
+                setAmount("");
+              }}
               id="repay-tab"
             >
               Repay
@@ -86,8 +101,8 @@ export default function BorrowPage() {
               <label className="input-label">Amount (USDC)</label>
               <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
                 {activeTab === "borrow"
-                  ? `Available: ${formatUSD(available)}`
-                  : `Owed: ${formatUSD(currentBorrowed)}`}
+                  ? `Available Limit: ${formatUSD(available)}`
+                  : `Owed Debt: ${formatUSD(currentBorrowed)}`}
               </span>
             </div>
             <div className="input-with-max">
@@ -193,7 +208,7 @@ export default function BorrowPage() {
                 marginBottom: "16px",
               }}
             >
-              ⚠️ Warning: This borrow amount puts your position at risk of liquidation.
+              ⚠️ Warning: This borrow amount puts your position near the liquidation threshold.
             </div>
           )}
 
@@ -205,12 +220,12 @@ export default function BorrowPage() {
           >
             {isLoading ? (
               <>
-                <span className="spinner" /> Processing...
+                <span className="spinner" style={{ width: 16, height: 16 }} /> Signing with Wallet...
               </>
             ) : activeTab === "borrow" ? (
-              "Borrow USDC"
+              "Borrow from Pool"
             ) : (
-              "Repay USDC"
+              "Repay Debt"
             )}
           </button>
         </div>
@@ -224,15 +239,15 @@ export default function BorrowPage() {
             {isConnected ? (
               <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                 {[
-                  { label: "Collateral Deposited", value: formatUSD(MOCK_USER_POSITION.deposited) },
-                  { label: "Current Borrow", value: formatUSD(currentBorrowed), color: "var(--accent-cyan)" },
+                  { label: "Collateral Deposited", value: formatUSD(userPosition.deposited) },
+                  { label: "Current Borrowed", value: formatUSD(currentBorrowed), color: "var(--accent-cyan)" },
                   { label: "Borrow Limit (75% LTV)", value: formatUSD(borrowLimit) },
                   { label: "Available to Borrow", value: formatUSD(available), color: "var(--accent-emerald)" },
                   {
                     label: "Health Factor",
-                    value: formatNumber(MOCK_USER_POSITION.healthFactor),
+                    value: formatNumber(userPosition.healthFactor),
                     color:
-                      MOCK_USER_POSITION.healthFactor > 1.5
+                      userPosition.healthFactor > 1.5
                         ? "var(--accent-emerald)"
                         : "var(--accent-amber)",
                   },
@@ -261,7 +276,7 @@ export default function BorrowPage() {
                 ))}
               </div>
             ) : (
-              <p style={{ color: "var(--text-muted)" }}>Connect wallet to see your position</p>
+              <p style={{ color: "var(--text-muted)" }}>Connect your Stellar wallet to see your position</p>
             )}
           </div>
 
@@ -277,11 +292,11 @@ export default function BorrowPage() {
                 paddingLeft: "16px",
               }}
             >
-              <li>Deposit collateral to increase your borrow limit</li>
+              <li>Deposit collateral on the Lend page to increase your borrow limit</li>
               <li>Borrow up to 75% of your collateral value (LTV)</li>
-              <li>Interest accrues continuously at the current APR</li>
-              <li>Positions below 85% health are liquidatable</li>
-              <li>Repay anytime — no lock-up periods</li>
+              <li>Interest accrues continuously based on pool utilization</li>
+              <li>Maintain Health Factor &gt; 1.0 to avoid liquidation</li>
+              <li>Repay anytime with no lock-up or early penalty</li>
             </ul>
           </div>
         </div>

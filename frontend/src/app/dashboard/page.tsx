@@ -7,13 +7,11 @@ import {
   formatPercent,
   formatNumber,
   MOCK_POOL_STATE,
-  MOCK_USER_POSITION,
-  MOCK_EVENTS,
   truncateAddress,
 } from "../providers";
 
 export default function DashboardPage() {
-  const { isConnected, address } = useWallet();
+  const { isConnected, address, userPosition, events, tokenBalance, xlmBalance } = useWallet();
 
   return (
     <div className="page-container" id="dashboard-page">
@@ -21,8 +19,8 @@ export default function DashboardPage() {
         <h1 className="page-title">Dashboard</h1>
         <p className="page-subtitle">
           {isConnected
-            ? `Welcome back, ${truncateAddress(address || "")}`
-            : "Connect your wallet to view your positions"}
+            ? `Connected: ${truncateAddress(address || "", 8)} • ${formatNumber(xlmBalance, 2)} XLM Available`
+            : "Connect your Stellar wallet to view and manage your positions"}
         </p>
       </div>
 
@@ -60,14 +58,14 @@ export default function DashboardPage() {
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "16px" }}>
                 <div>
                   <div style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>Deposited</div>
-                  <div style={{ fontSize: "1.4rem", fontWeight: 700 }}>
-                    {formatUSD(MOCK_USER_POSITION.deposited)}
+                  <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "var(--accent-emerald)" }}>
+                    {formatUSD(userPosition.deposited)}
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
                   <div style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>Borrowed</div>
-                  <div style={{ fontSize: "1.4rem", fontWeight: 700 }}>
-                    {formatUSD(MOCK_USER_POSITION.borrowed)}
+                  <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "var(--accent-cyan)" }}>
+                    {formatUSD(userPosition.borrowed)}
                   </div>
                 </div>
               </div>
@@ -80,27 +78,27 @@ export default function DashboardPage() {
                   </span>
                   <span
                     className={`badge ${
-                      MOCK_USER_POSITION.healthFactor > 1.5
+                      userPosition.healthFactor > 1.5
                         ? "badge-success"
-                        : MOCK_USER_POSITION.healthFactor > 1.1
+                        : userPosition.healthFactor > 1.1
                         ? "badge-warning"
                         : "badge-danger"
                     }`}
                   >
-                    {formatNumber(MOCK_USER_POSITION.healthFactor)}
+                    {userPosition.healthFactor >= 999 ? "∞ Max" : formatNumber(userPosition.healthFactor)}
                   </span>
                 </div>
                 <div className="health-bar">
                   <div
                     className={`health-bar-fill ${
-                      MOCK_USER_POSITION.healthFactor > 1.5
+                      userPosition.healthFactor > 1.5
                         ? "healthy"
-                        : MOCK_USER_POSITION.healthFactor > 1.1
+                        : userPosition.healthFactor > 1.1
                         ? "warning"
                         : "danger"
                     }`}
                     style={{
-                      width: `${Math.min((MOCK_USER_POSITION.healthFactor / 2) * 100, 100)}%`,
+                      width: `${Math.min((userPosition.healthFactor / 2) * 100, 100)}%`,
                     }}
                   />
                 </div>
@@ -109,12 +107,12 @@ export default function DashboardPage() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div className="stat-card" style={{ padding: "14px" }}>
                   <div className="stat-label" style={{ fontSize: "0.7rem" }}>Borrow Limit</div>
-                  <div style={{ fontWeight: 600 }}>{formatUSD(MOCK_USER_POSITION.borrowLimit)}</div>
+                  <div style={{ fontWeight: 600 }}>{formatUSD(userPosition.borrowLimit)}</div>
                 </div>
                 <div className="stat-card" style={{ padding: "14px" }}>
-                  <div className="stat-label" style={{ fontSize: "0.7rem" }}>Net APY</div>
-                  <div style={{ fontWeight: 600, color: "var(--accent-emerald)" }}>
-                    +{formatPercent(MOCK_USER_POSITION.netAPY)}
+                  <div className="stat-label" style={{ fontSize: "0.7rem" }}>Wallet Available</div>
+                  <div style={{ fontWeight: 600, color: "var(--accent-cyan)" }}>
+                    {formatUSD(tokenBalance)}
                   </div>
                 </div>
               </div>
@@ -128,7 +126,7 @@ export default function DashboardPage() {
               }}
             >
               <div style={{ fontSize: "2rem", marginBottom: "12px" }}>🔒</div>
-              <p>Connect your wallet to view your position</p>
+              <p>Connect your Stellar wallet to view your position</p>
             </div>
           )}
         </div>
@@ -143,26 +141,45 @@ export default function DashboardPage() {
               marginBottom: "16px",
             }}
           >
-            <h2 style={{ fontSize: "1.2rem", fontWeight: 700 }}>Live Activity</h2>
+            <h2 style={{ fontSize: "1.2rem", fontWeight: 700 }}>Live Activity Stream</h2>
             <span className="badge badge-info">
               <span className="pulse" style={{ display: "inline-block" }}>●</span> Real-time
             </span>
           </div>
 
           <div className="event-stream" id="event-stream">
-            {MOCK_EVENTS.map((event) => (
+            {events.map((event) => (
               <div className="event-item" key={event.id}>
                 <div className={`event-dot ${event.type}`} />
                 <div className="event-content">
                   <div className="event-title">
-                    {event.type === "deposit" && "📥 Deposit"}
-                    {event.type === "borrow" && "💰 Borrow"}
-                    {event.type === "repay" && "↩️ Repay"}
-                    {event.type === "liquidate" && "⚡ Liquidation"}
+                    {event.type === "deposit" && "📥 Deposit to Pool"}
+                    {event.type === "borrow" && "💰 Borrow from Pool"}
+                    {event.type === "repay" && "↩️ Debt Repayment"}
+                    {event.type === "withdraw" && "📤 Collateral Withdrawal"}
+                    {event.type === "liquidate" && "⚡ Position Liquidated"}
+                    {event.type === "stake" && "🗳️ Governance Staked"}
+                    {event.type === "vote" && "🗳️ Governance Vote Cast"}
                   </div>
                   <div className="event-detail">
                     {event.user} • {formatNumber(event.amount, 0)} {event.token}
                   </div>
+                  {event.txHash && (
+                    <a
+                      href={`https://stellar.expert/explorer/testnet/tx/${event.txHash}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        fontSize: "0.7rem",
+                        color: "var(--accent-cyan)",
+                        textDecoration: "underline",
+                        display: "inline-block",
+                        marginTop: "2px",
+                      }}
+                    >
+                      Tx: {event.txHash.slice(0, 8)}...{event.txHash.slice(-6)} ↗
+                    </a>
+                  )}
                 </div>
                 <span className="event-time">{event.time}</span>
               </div>

@@ -7,42 +7,56 @@ import {
   formatUSD,
   formatPercent,
   MOCK_POOL_STATE,
-  MOCK_USER_POSITION,
 } from "../providers";
 
 export default function LendPage() {
-  const { isConnected } = useWallet();
+  const { isConnected, tokenBalance, userPosition, executeTransaction } = useWallet();
   const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState<"deposit" | "withdraw">("deposit");
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const availableBalance = activeTab === "deposit" ? tokenBalance : userPosition.deposited;
+
   const handleSubmit = async () => {
-    if (!amount || parseFloat(amount) <= 0) {
-      addToast("error", "Please enter a valid amount");
+    const numAmount = parseFloat(amount);
+    if (!amount || isNaN(numAmount) || numAmount <= 0) {
+      addToast("error", "Please enter a valid positive amount");
       return;
     }
     if (!isConnected) {
-      addToast("error", "Please connect your wallet first");
+      addToast("error", "Please connect your Stellar wallet first");
+      return;
+    }
+    if (numAmount > availableBalance) {
+      addToast(
+        "error",
+        `Insufficient ${activeTab === "deposit" ? "wallet" : "deposited"} balance`
+      );
       return;
     }
 
     setIsLoading(true);
-    // Simulate transaction
-    await new Promise((r) => setTimeout(r, 2000));
-    addToast(
-      "success",
-      `${activeTab === "deposit" ? "Deposited" : "Withdrawn"} ${amount} USDC successfully!`
-    );
-    setAmount("");
+    const result = await executeTransaction(activeTab, numAmount);
     setIsLoading(false);
+
+    if (result.success) {
+      addToast(
+        "success",
+        `Successfully ${activeTab === "deposit" ? "deposited" : "withdrawn"} ${numAmount.toLocaleString()} USDC to lending pool!`,
+        result.txHash
+      );
+      setAmount("");
+    } else {
+      addToast("error", result.error || "Transaction failed");
+    }
   };
 
   return (
     <div className="page-container" id="lend-page">
       <div className="page-header">
         <h1 className="page-title">Lend</h1>
-        <p className="page-subtitle">Deposit assets to earn yield from borrowers</p>
+        <p className="page-subtitle">Deposit assets into Soroban pools to earn passive yield</p>
       </div>
 
       <div className="two-col-layout">
@@ -51,14 +65,20 @@ export default function LendPage() {
           <div className="tab-group">
             <button
               className={`tab ${activeTab === "deposit" ? "active" : ""}`}
-              onClick={() => setActiveTab("deposit")}
+              onClick={() => {
+                setActiveTab("deposit");
+                setAmount("");
+              }}
               id="deposit-tab"
             >
               Deposit
             </button>
             <button
               className={`tab ${activeTab === "withdraw" ? "active" : ""}`}
-              onClick={() => setActiveTab("withdraw")}
+              onClick={() => {
+                setActiveTab("withdraw");
+                setAmount("");
+              }}
               id="withdraw-tab"
             >
               Withdraw
@@ -75,7 +95,8 @@ export default function LendPage() {
             >
               <label className="input-label">Amount (USDC)</label>
               <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                Balance: {formatUSD(activeTab === "deposit" ? 75_000 : MOCK_USER_POSITION.deposited)}
+                {activeTab === "deposit" ? "Wallet Balance" : "Deposited"}:{" "}
+                <strong style={{ color: "var(--text-primary)" }}>{formatUSD(availableBalance)}</strong>
               </span>
             </div>
             <div className="input-with-max">
@@ -89,13 +110,7 @@ export default function LendPage() {
               />
               <button
                 className="input-max-btn"
-                onClick={() =>
-                  setAmount(
-                    activeTab === "deposit"
-                      ? "75000"
-                      : MOCK_USER_POSITION.deposited.toString()
-                  )
-                }
+                onClick={() => setAmount(availableBalance.toString())}
               >
                 MAX
               </button>
@@ -132,7 +147,7 @@ export default function LendPage() {
                   fontSize: "0.85rem",
                 }}
               >
-                <span style={{ color: "var(--text-secondary)" }}>Estimated APY</span>
+                <span style={{ color: "var(--text-secondary)" }}>Supply APY</span>
                 <span style={{ fontWeight: 600, color: "var(--accent-emerald)" }}>
                   {formatPercent(MOCK_POOL_STATE.supplyRate)}
                 </span>
@@ -148,12 +163,12 @@ export default function LendPage() {
           >
             {isLoading ? (
               <>
-                <span className="spinner" /> Processing...
+                <span className="spinner" style={{ width: 16, height: 16 }} /> Signing & Submitting...
               </>
             ) : activeTab === "deposit" ? (
-              "Deposit USDC"
+              "Deposit to Pool"
             ) : (
-              "Withdraw USDC"
+              "Withdraw from Pool"
             )}
           </button>
         </div>
@@ -206,22 +221,30 @@ export default function LendPage() {
 
           <div className="card-glass">
             <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "12px" }}>
-              Your Deposit
+              Your Deposit Summary
             </h3>
             {isConnected ? (
               <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--text-secondary)" }}>Deposited</span>
-                  <span style={{ fontWeight: 600 }}>{formatUSD(MOCK_USER_POSITION.deposited)}</span>
+                  <span style={{ color: "var(--text-secondary)" }}>Total Deposited</span>
+                  <span style={{ fontWeight: 600, color: "var(--accent-cyan)" }}>
+                    {formatUSD(userPosition.deposited)}
+                  </span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--text-secondary)" }}>Earned Interest</span>
-                  <span style={{ fontWeight: 600, color: "var(--accent-emerald)" }}>+$245.30</span>
+                  <span style={{ color: "var(--text-secondary)" }}>Wallet Available</span>
+                  <span style={{ fontWeight: 600 }}>{formatUSD(tokenBalance)}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--text-secondary)" }}>Collateral Power</span>
+                  <span style={{ fontWeight: 600, color: "var(--accent-emerald)" }}>
+                    {formatUSD(userPosition.borrowLimit)} (75% LTV)
+                  </span>
                 </div>
               </div>
             ) : (
               <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
-                Connect wallet to see your position
+                Connect your Stellar wallet to see your position
               </p>
             )}
           </div>

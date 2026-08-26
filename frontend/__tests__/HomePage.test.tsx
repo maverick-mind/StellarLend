@@ -9,6 +9,19 @@ jest.mock('next/link', () => {
   );
 });
 
+// Mock providers
+jest.mock('../src/app/providers', () => ({
+  formatUSD: (n: number) => `$${(n || 0).toLocaleString()}`,
+  MOCK_POOL_STATE: {
+    totalDeposits: 2450000,
+    totalBorrows: 1230000,
+    totalReserves: 45000,
+    utilizationRate: 50.2,
+    borrowRate: 4.8,
+    supplyRate: 2.1,
+  },
+}));
+
 describe('HomePage', () => {
   it('renders the hero title', () => {
     render(<HomePage />);
