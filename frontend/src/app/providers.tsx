@@ -85,11 +85,24 @@ const initialUserPosition: UserPosition = {
 };
 
 const initialEvents: ActivityEvent[] = [
-  { id: "ev-1", type: "deposit", user: "GC3G...KMPR", amount: 5000, token: "USDC", time: "2 min ago", txHash: "a7c2b5d4e1f893420abcde1234567890abcdef1234567890abcdef1234567890" },
-  { id: "ev-2", type: "borrow", user: "GBXH...W7PJ", amount: 2500, token: "USDC", time: "5 min ago", txHash: "b8d3c6e5f2a904531bcdef2345678901bcdefa2345678901bcdefa2345678901" },
-  { id: "ev-3", type: "repay", user: "GCJZ...NQBQ", amount: 1000, token: "USDC", time: "8 min ago", txHash: "c9e4d7f6a3b015642cdefa3456789012cdefab3456789012cdefab3456789012" },
-  { id: "ev-4", type: "liquidate", user: "GDHJ...QRXJ", amount: 8000, token: "USDC", time: "12 min ago", txHash: "dae5e8a7b4c126753defab4567890123defabc4567890123defabc4567890123" },
-  { id: "ev-5", type: "deposit", user: "GFCB...LQHP", amount: 15000, token: "USDC", time: "15 min ago", txHash: "ebf6f9b8c5d237864efabc5678901234efabcd5678901234efabcd5678901234" },
+  {
+    id: "ev-1",
+    type: "deposit",
+    user: "GCZ6...KQ64",
+    amount: 5000,
+    token: "USDC",
+    time: "Just now",
+    txHash: "b0a08dbc9a94646f81247e22b989c2a5e2fd45f1810beff7d6eceeee3f54da04",
+  },
+  {
+    id: "ev-2",
+    type: "borrow",
+    user: "GC3G...KMPR",
+    amount: 2500,
+    token: "USDC",
+    time: "5 min ago",
+    txHash: "b0a08dbc9a94646f81247e22b989c2a5e2fd45f1810beff7d6eceeee3f54da04",
+  },
 ];
 
 export const MOCK_PROPOSALS: ProposalItem[] = [
@@ -183,7 +196,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts((prev) => [...prev, { id, type, message, txHash }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 7000);
+    }, 10000);
   }, []);
 
   const removeToast = useCallback((id: string) => {
@@ -198,7 +211,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           <div
             key={toast.id}
             className={`toast toast-${toast.type}`}
-            style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: "4px" }}
+            style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: "6px" }}
             onClick={() => removeToast(toast.id)}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -214,14 +227,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 rel="noreferrer"
                 onClick={(e) => e.stopPropagation()}
                 style={{
-                  fontSize: "0.75rem",
+                  fontSize: "0.8rem",
                   color: "var(--accent-cyan)",
                   textDecoration: "underline",
                   marginTop: "2px",
                   wordBreak: "break-all",
+                  fontWeight: 500,
                 }}
               >
-                🔍 View on StellarExpert: {toast.txHash.slice(0, 10)}...{toast.txHash.slice(-8)} ↗
+                🔍 View Confirmed on StellarExpert: {toast.txHash.slice(0, 10)}...{toast.txHash.slice(-8)} ↗
               </a>
             )}
           </div>
@@ -234,18 +248,19 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 // ===== Wallet Provider Implementation =====
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [address, setAddress] = useState<string | null>(null);
+  const [secretKey, setSecretKey] = useState<string | null>(null);
   const [walletType, setWalletType] = useState<"freighter" | "browser" | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isFreighterInstalled, setIsFreighterInstalled] = useState(false);
   const [xlmBalance, setXlmBalance] = useState(10000);
-  const [tokenBalance, setTokenBalance] = useState(75000); // 75k USDC available
-  const [stakedGovBalance, setStakedGovBalance] = useState(15000); // 15k SLT staked
+  const [tokenBalance, setTokenBalance] = useState(75000); // 75k USDC
+  const [stakedGovBalance, setStakedGovBalance] = useState(15000); // 15k SLT
   const [isFunding, setIsFunding] = useState(false);
   const [userPosition, setUserPosition] = useState<UserPosition>(initialUserPosition);
   const [events, setEvents] = useState<ActivityEvent[]>(initialEvents);
   const [proposals, setProposals] = useState<ProposalItem[]>(MOCK_PROPOSALS);
 
-  // Check if Freighter extension is available in browser
+  // Check if Freighter extension is available
   useEffect(() => {
     async function checkFreighter() {
       try {
@@ -272,7 +287,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         setXlmBalance(parseFloat(nativeBalance.balance));
       }
     } catch {
-      // If account not created on testnet yet, keep current state
+      // Account might be newly created
     }
   }, [address]);
 
@@ -290,30 +305,68 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       const accessObj = await freighter.requestAccess();
       if (accessObj && accessObj.address) {
         setAddress(accessObj.address);
+        setSecretKey(null);
         setWalletType("freighter");
+        // Check if funded on testnet, if not auto-fund with friendbot
+        try {
+          const server = new StellarSdk.Horizon.Server(HORIZON_URL);
+          await server.loadAccount(accessObj.address);
+        } catch {
+          await fetch(`https://friendbot.stellar.org?addr=${encodeURIComponent(accessObj.address)}`);
+        }
       } else {
         throw new Error("User declined Freighter connection");
       }
     } catch (err) {
-      console.warn("Freighter connection error, using browser keypair:", err);
-      // Seamlessly generate/use active Testnet account
-      const keypair = StellarSdk.Keypair.random();
-      setAddress(keypair.publicKey());
-      setWalletType("browser");
+      console.warn("Freighter connection issue, falling back to Browser Keypair:", err);
+      await connectBrowserWallet();
     } finally {
       setIsConnecting(false);
     }
   }, []);
 
-  // Connect via Instant In-Browser Testnet Keypair
+  // Connect via In-Browser Testnet Keypair
   const connectBrowserWallet = useCallback(async () => {
     setIsConnecting(true);
     try {
-      // Use standard funded testnet key or generate one
-      const fundedAddress = "GC3G4AQ5TAG5H7C24QQ25Z2VP5HBNHRR4UBTKRUYB74GYD3AV7IKKMPR";
-      setAddress(fundedAddress);
+      let keypair: StellarSdk.Keypair;
+      const savedSecret = typeof window !== "undefined" ? localStorage.getItem("stellarlend_secret_key") : null;
+      if (savedSecret) {
+        try {
+          keypair = StellarSdk.Keypair.fromSecret(savedSecret);
+        } catch {
+          keypair = StellarSdk.Keypair.random();
+        }
+      } else {
+        keypair = StellarSdk.Keypair.random();
+        if (typeof window !== "undefined") {
+          localStorage.setItem("stellarlend_secret_key", keypair.secret());
+        }
+      }
+
+      const pubKey = keypair.publicKey();
+      setAddress(pubKey);
+      setSecretKey(keypair.secret());
       setWalletType("browser");
-      setXlmBalance(10000);
+
+      // Ensure account is funded on Testnet with Friendbot
+      const server = new StellarSdk.Horizon.Server(HORIZON_URL);
+      try {
+        const acc = await server.loadAccount(pubKey);
+        const native = acc.balances.find((b) => b.asset_type === "native");
+        if (native) setXlmBalance(parseFloat(native.balance));
+      } catch {
+        // Fund with friendbot
+        await fetch(`https://friendbot.stellar.org?addr=${encodeURIComponent(pubKey)}`);
+        await new Promise((r) => setTimeout(r, 2000));
+        try {
+          const acc = await server.loadAccount(pubKey);
+          const native = acc.balances.find((b) => b.asset_type === "native");
+          if (native) setXlmBalance(parseFloat(native.balance));
+        } catch {
+          setXlmBalance(10000);
+        }
+      }
     } finally {
       setIsConnecting(false);
     }
@@ -325,6 +378,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const disconnect = useCallback(() => {
     setAddress(null);
+    setSecretKey(null);
     setWalletType(null);
   }, []);
 
@@ -333,127 +387,180 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     if (!address) return;
     setIsFunding(true);
     try {
-      const res = await fetch(`https://friendbot.stellar.org?addr=${encodeURIComponent(address)}`);
-      if (res.ok) {
-        setXlmBalance((prev) => prev + 10000);
-      }
+      await fetch(`https://friendbot.stellar.org?addr=${encodeURIComponent(address)}`);
+      await new Promise((r) => setTimeout(r, 1500));
+      await refreshBalances();
     } catch (err) {
       console.error("Friendbot funding error:", err);
     } finally {
       setIsFunding(false);
     }
-  }, [address]);
+  }, [address, refreshBalances]);
 
-  // Generate real deterministic or random 64-char transaction hash
-  const generateTxHash = () => {
-    const chars = "0123456789abcdef";
-    let hash = "";
-    for (let i = 0; i < 64; i++) {
-      hash += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return hash;
-  };
-
-  // Execute real contract transaction and update wallet & protocol state
+  // Execute REAL on-chain transaction to Stellar Testnet Horizon!
   const executeTransaction = useCallback(
     async (
       action: "deposit" | "withdraw" | "borrow" | "repay" | "liquidate" | "stake" | "unstake" | "vote",
       amount: number,
       extraParams?: Record<string, unknown>
-    ) => {
+    ): Promise<{ success: boolean; txHash: string; error?: string }> => {
       if (!address) {
         return { success: false, txHash: "", error: "Wallet not connected" };
       }
 
-      // If Freighter is connected, attempt Freighter signature
-      if (walletType === "freighter") {
+      try {
+        const server = new StellarSdk.Horizon.Server(HORIZON_URL);
+
+        // 1. Load account or auto-fund if new
+        let account: StellarSdk.Horizon.AccountResponse;
         try {
+          account = await server.loadAccount(address);
+        } catch {
+          await fetch(`https://friendbot.stellar.org?addr=${encodeURIComponent(address)}`);
+          await new Promise((r) => setTimeout(r, 2000));
+          account = await server.loadAccount(address);
+        }
+
+        // 2. Build live Stellar Testnet transaction recording the contract action
+        const memoText = `SL:${action.toUpperCase()}:${amount}`.slice(0, 28);
+        const dataKey = `SL_${action.toUpperCase()}`.slice(0, 64);
+        const dataVal = Buffer.from(`${amount}_${Date.now()}`);
+
+        const tx = new StellarSdk.TransactionBuilder(account, {
+          fee: StellarSdk.BASE_FEE,
+          networkPassphrase: StellarSdk.Networks.TESTNET,
+        })
+          .addOperation(
+            StellarSdk.Operation.manageData({
+              name: dataKey,
+              value: dataVal,
+            })
+          )
+          .addMemo(StellarSdk.Memo.text(memoText))
+          .setTimeout(60)
+          .build();
+
+        let submittedHash = "";
+
+        // 3. Sign and Submit
+        if (walletType === "freighter") {
           const freighter = await import("@stellar/freighter-api");
           if (typeof freighter.signTransaction === "function") {
-            // Freighter signature handler
-          }
-        } catch {
-          // Continue flow
-        }
-      }
+            const signResult = await freighter.signTransaction(tx.toXDR(), {
+              networkPassphrase: StellarSdk.Networks.TESTNET,
+            });
+            const xdrString =
+              typeof signResult === "string"
+                ? signResult
+                : (signResult as { signedTxXdr?: string; error?: string })?.signedTxXdr;
 
-      // Generate verified testnet transaction hash
-      const txHash = generateTxHash();
-
-      // State updates based on action
-      setUserPosition((prev) => {
-        let newDeposited = prev.deposited;
-        let newBorrowed = prev.borrowed;
-
-        if (action === "deposit") {
-          newDeposited += amount;
-          setTokenBalance((t) => Math.max(0, t - amount));
-        } else if (action === "withdraw") {
-          newDeposited = Math.max(0, newDeposited - amount);
-          setTokenBalance((t) => t + amount);
-        } else if (action === "borrow") {
-          newBorrowed += amount;
-          setTokenBalance((t) => t + amount);
-        } else if (action === "repay") {
-          newBorrowed = Math.max(0, newBorrowed - amount);
-          setTokenBalance((t) => Math.max(0, t - amount));
-        } else if (action === "liquidate") {
-          setTokenBalance((t) => t + amount * 0.05); // 5% bonus reward
-        } else if (action === "stake") {
-          setStakedGovBalance((s) => s + amount);
-        } else if (action === "unstake") {
-          setStakedGovBalance((s) => Math.max(0, s - amount));
-        }
-
-        const collateralValue = newDeposited;
-        const borrowLimit = collateralValue * 0.75;
-        const healthFactor = newBorrowed === 0 ? 999 : (collateralValue * 0.85) / newBorrowed;
-
-        return {
-          ...prev,
-          deposited: newDeposited,
-          borrowed: newBorrowed,
-          collateralValue,
-          borrowLimit,
-          healthFactor: Math.min(healthFactor, 999),
-        };
-      });
-
-      // Handle voting action
-      if (action === "vote" && extraParams?.proposalId !== undefined) {
-        const pId = Number(extraParams.proposalId);
-        const support = Boolean(extraParams.support);
-        setProposals((prev) =>
-          prev.map((p) => {
-            if (p.id === pId) {
-              return {
-                ...p,
-                votesFor: support ? p.votesFor + stakedGovBalance : p.votesFor,
-                votesAgainst: !support ? p.votesAgainst + stakedGovBalance : p.votesAgainst,
-                totalVoters: p.totalVoters + 1,
-              };
+            if (!xdrString) {
+              return { success: false, txHash: "", error: "Transaction signing was rejected" };
             }
-            return p;
-          })
-        );
+            const signedTx = StellarSdk.TransactionBuilder.fromXDR(
+              xdrString,
+              StellarSdk.Networks.TESTNET
+            );
+            const res = await server.submitTransaction(signedTx);
+            submittedHash = res.hash;
+          } else {
+            throw new Error("Freighter signTransaction not available");
+          }
+        } else {
+          // Browser keypair
+          let keypair: StellarSdk.Keypair;
+          if (secretKey) {
+            keypair = StellarSdk.Keypair.fromSecret(secretKey);
+          } else {
+            const savedSecret = localStorage.getItem("stellarlend_secret_key");
+            if (!savedSecret) throw new Error("No keypair found");
+            keypair = StellarSdk.Keypair.fromSecret(savedSecret);
+          }
+          tx.sign(keypair);
+          const res = await server.submitTransaction(tx);
+          submittedHash = res.hash;
+        }
+
+        // 4. Update UI State with new values
+        setUserPosition((prev) => {
+          let newDeposited = prev.deposited;
+          let newBorrowed = prev.borrowed;
+
+          if (action === "deposit") {
+            newDeposited += amount;
+            setTokenBalance((t) => Math.max(0, t - amount));
+          } else if (action === "withdraw") {
+            newDeposited = Math.max(0, newDeposited - amount);
+            setTokenBalance((t) => t + amount);
+          } else if (action === "borrow") {
+            newBorrowed += amount;
+            setTokenBalance((t) => t + amount);
+          } else if (action === "repay") {
+            newBorrowed = Math.max(0, newBorrowed - amount);
+            setTokenBalance((t) => Math.max(0, t - amount));
+          } else if (action === "liquidate") {
+            setTokenBalance((t) => t + amount * 0.05);
+          } else if (action === "stake") {
+            setStakedGovBalance((s) => s + amount);
+          } else if (action === "unstake") {
+            setStakedGovBalance((s) => Math.max(0, s - amount));
+          }
+
+          const collateralValue = newDeposited;
+          const borrowLimit = collateralValue * 0.75;
+          const healthFactor = newBorrowed === 0 ? 999 : (collateralValue * 0.85) / newBorrowed;
+
+          return {
+            ...prev,
+            deposited: newDeposited,
+            borrowed: newBorrowed,
+            collateralValue,
+            borrowLimit,
+            healthFactor: Math.min(healthFactor, 999),
+          };
+        });
+
+        // Handle governance voting
+        if (action === "vote" && extraParams?.proposalId !== undefined) {
+          const pId = Number(extraParams.proposalId);
+          const support = Boolean(extraParams.support);
+          setProposals((prev) =>
+            prev.map((p) => {
+              if (p.id === pId) {
+                return {
+                  ...p,
+                  votesFor: support ? p.votesFor + stakedGovBalance : p.votesFor,
+                  votesAgainst: !support ? p.votesAgainst + stakedGovBalance : p.votesAgainst,
+                  totalVoters: p.totalVoters + 1,
+                };
+              }
+              return p;
+            })
+          );
+        }
+
+        // Add to live Activity Stream
+        const newEvent: ActivityEvent = {
+          id: `ev-${Date.now()}`,
+          type: action === "unstake" ? "stake" : action,
+          user: `${address.slice(0, 4)}...${address.slice(-4)}`,
+          amount,
+          token: action === "stake" || action === "unstake" ? "SLT" : "USDC",
+          time: "Just now",
+          txHash: submittedHash,
+        };
+
+        setEvents((prev) => [newEvent, ...prev.slice(0, 7)]);
+        await refreshBalances();
+
+        return { success: true, txHash: submittedHash };
+      } catch (err: unknown) {
+        console.error("Live transaction failed:", err);
+        const errMsg = err instanceof Error ? err.message : "Transaction failed on Stellar network";
+        return { success: false, txHash: "", error: errMsg };
       }
-
-      // Add to live Activity Stream
-      const newEvent: ActivityEvent = {
-        id: `ev-${Date.now()}`,
-        type: action === "unstake" ? "stake" : action,
-        user: `${address.slice(0, 4)}...${address.slice(-4)}`,
-        amount,
-        token: action === "stake" || action === "unstake" ? "SLT" : "USDC",
-        time: "Just now",
-        txHash,
-      };
-
-      setEvents((prev) => [newEvent, ...prev.slice(0, 7)]);
-
-      return { success: true, txHash };
     },
-    [address, walletType, stakedGovBalance]
+    [address, walletType, secretKey, stakedGovBalance, refreshBalances]
   );
 
   return (
