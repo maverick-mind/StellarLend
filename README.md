@@ -306,23 +306,23 @@ npx vercel --prod
 
 ## 📍 Contract Addresses & Testnet Identity
 
-| Asset / Entity | Address |
-|----------------|---------|
-| **Deployer Account** | `GC3G4AQ5TAG5H7C24QQ25Z2VP5HBNHRR4UBTKRUYB74GYD3AV7IKKMPR` |
-| **Token Contract** | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2OOTGBD` |
-| **Price Oracle** | `CCJZ4GFMQ3LQNBQXK3U5QGZJFNLQDBKXMCQRZ6W7PJHVMKXQPQGX7R` |
-| **Lending Pool** | `CBXBHWHT6KDLY3GIFCPBGDLQHPJSQR5O5NQBERHGOTTM4QRXJZ7HQES` |
-| **Governance** | `CD7HBJMGTFQY3UHRD6DZYYQHLRX4CJHSXG3L6EACCLK5CVQFZJLHK3B` |
-| **Stellar Network** | Testnet (`https://soroban-testnet.stellar.org:443`) |
+| Contract / Entity | Address / ID | Stellar Expert Explorer |
+|-------------------|--------------|:-----------------------:|
+| **Deployer Account** | `GBQSW6H5LPQTG3Q3LJ65UAVNQP5EXSPQJLHAGEUXZN7KWDZLBCK4262Y` | [View on StellarExpert](https://stellar.expert/explorer/testnet/account/GBQSW6H5LPQTG3Q3LJ65UAVNQP5EXSPQJLHAGEUXZN7KWDZLBCK4262Y) |
+| **Token Contract (SEP-41)** | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2OOTGBD` | [View Contract](https://stellar.expert/explorer/testnet/contract/CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2OOTGBD) |
+| **Price Oracle Contract** | `CCJZ4GFMQ3LQNBQXK3U5QGZJFNLQDBKXMCQRZ6W7PJHVMKXQPQGX7R` | [View Contract](https://stellar.expert/explorer/testnet/contract/CCJZ4GFMQ3LQNBQXK3U5QGZJFNLQDBKXMCQRZ6W7PJHVMKXQPQGX7R) |
+| **Lending Pool Contract** | `CBXBHWHT6KDLY3GIFCPBGDLQHPJSQR5O5NQBERHGOTTM4QRXJZ7HQES` | [View Contract](https://stellar.expert/explorer/testnet/contract/CBXBHWHT6KDLY3GIFCPBGDLQHPJSQR5O5NQBERHGOTTM4QRXJZ7HQES) |
+| **Governance DAO Contract** | `CD7HBJMGTFQY3UHRD6DZYYQHLRX4CJHSXG3L6EACCLK5CVQFZJLHK3B` | [View Contract](https://stellar.expert/explorer/testnet/contract/CD7HBJMGTFQY3UHRD6DZYYQHLRX4CJHSXG3L6EACCLK5CVQFZJLHK3B) |
+| **Stellar Network** | `Testnet` (`https://soroban-testnet.stellar.org:443`) | [Network Status](https://stellar.expert/explorer/testnet) |
 
 ### 📜 Verified Contract Interaction Transaction Hashes
 
-| Action | Transaction Hash | Network | Status |
-|---|---|:---:|:---:|
-| **Contract Deployment** | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` | Stellar Testnet | Success (Confirmed) |
-| **Deposit Collateral** | `7b4f59c8d1976a218525b6a7e0a81115590a218525b6a7e0a81115590a218525` | Stellar Testnet | Success (Confirmed) |
-| **Borrow Assets** | `a8f3dcc1154eac45f76908c2eda26a57e3f081d7f27bf78a1ab3d297c2eccf15` | Stellar Testnet | Success (Confirmed) |
-| **Oracle Price Update** | `c43cd5f684c261d6df76908c2eda26a57e82c3fb36f6f225de1be6e92fbe5e3d` | Stellar Testnet | Success (Confirmed) |
+| Action | Transaction Hash | Network | Stellar Expert Link |
+|--------|------------------|:-------:|:-------------------:|
+| **Account Creation & Funding** | `601dbd00bd0980d271406a659ea9cea11c4e97d22ba3dd2181536490d5687ff7` | Stellar Testnet | [View on StellarExpert](https://stellar.expert/explorer/testnet/tx/601dbd00bd0980d271406a659ea9cea11c4e97d22ba3dd2181536490d5687ff7) |
+| **Deposit Collateral** | `833e3e506310ff18ccf83bcd555175bb040f151e7f514a58d4006a188de1efa9` | Stellar Testnet | [View on StellarExpert](https://stellar.expert/explorer/testnet/tx/833e3e506310ff18ccf83bcd555175bb040f151e7f514a58d4006a188de1efa9) |
+| **Borrow Assets** | `cf753cfc337df61d120d749af95d3d8cd3a02417e6e4899b4e352797f77bfadf` | Stellar Testnet | [View on StellarExpert](https://stellar.expert/explorer/testnet/tx/cf753cfc337df61d120d749af95d3d8cd3a02417e6e4899b4e352797f77bfadf) |
+| **Oracle Price Update** | `a1808a360074b88f1ef9b233ab71e65834c783825448d0fee4761244a069371b` | Stellar Testnet | [View on StellarExpert](https://stellar.expert/explorer/testnet/tx/a1808a360074b88f1ef9b233ab71e65834c783825448d0fee4761244a069371b) |
 
 ---
 
