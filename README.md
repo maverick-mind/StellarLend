@@ -348,6 +348,12 @@ npx vercel --prod
 |:---:|
 | <img src="./docs/screenshots/mobile.png" width="360" alt="Mobile Dashboard" /> |
 
+### 🧪 Automated Test Suite Output (25 Passing Tests)
+
+| Frontend Test Suite (Jest / Testing Library — 17/17 Passing) |
+|:---:|
+| ![Test Output](./docs/screenshots/tests.png) |
+
 ---
 
 ## 🛠 Tech Stack
