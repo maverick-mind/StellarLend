@@ -421,15 +421,30 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
           account = await server.loadAccount(address);
         }
 
-        // 2. Build live Stellar Testnet transaction recording the contract action
+        // 2. Build live Stellar Testnet transaction recording the contract action & real asset transfer
         const memoText = `SL:${action.toUpperCase()}:${amount}`.slice(0, 28);
         const dataKey = `SL_${action.toUpperCase()}`.slice(0, 64);
         const dataVal = Buffer.from(`${amount}_${Date.now()}`);
+        const PROTOCOL_VAULT = "GC3G4AQ5TAG5H7C24QQ25Z2VP5HBNHRR4UBTKRUYB74GYD3AV7IKKMPR";
 
-        const tx = new StellarSdk.TransactionBuilder(account, {
+        const txBuilder = new StellarSdk.TransactionBuilder(account, {
           fee: StellarSdk.BASE_FEE,
           networkPassphrase: StellarSdk.Networks.TESTNET,
-        })
+        });
+
+        // If depositing, repaying, or staking, transfer real testnet XLM to protocol vault
+        if (action === "deposit" || action === "repay" || action === "stake") {
+          const xlmAmount = Math.max(1, Math.min(amount <= 100 ? amount : amount * 0.01, 10)).toFixed(6);
+          txBuilder.addOperation(
+            StellarSdk.Operation.payment({
+              destination: PROTOCOL_VAULT,
+              asset: StellarSdk.Asset.native(),
+              amount: xlmAmount,
+            })
+          );
+        }
+
+        txBuilder
           .addOperation(
             StellarSdk.Operation.manageData({
               name: dataKey,
@@ -437,8 +452,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
             })
           )
           .addMemo(StellarSdk.Memo.text(memoText))
-          .setTimeout(60)
-          .build();
+          .setTimeout(60);
+
+        const tx = txBuilder.build();
 
         let submittedHash = "";
 
