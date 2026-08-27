@@ -43,7 +43,7 @@ fn setup_pool(env: &Env) -> (Address, Address, Address, Address) {
     (pool_id, admin, token_id, collateral_token_id)
 }
 
-fn mint_tokens(env: &Env, token_id: &Address, admin: &Address, to: &Address, amount: i128) {
+fn mint_tokens(env: &Env, token_id: &Address, _admin: &Address, to: &Address, amount: i128) {
     let token = soroban_sdk::token::StellarAssetClient::new(env, token_id);
     token.mint(to, &amount);
 }
