@@ -11,7 +11,7 @@ import {
 } from "../providers";
 
 export default function BorrowPage() {
-  const { isConnected, tokenBalance, userPosition, executeTransaction } = useWallet();
+  const { isConnected, userPosition, executeTransaction } = useWallet();
   const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState<"borrow" | "repay">("borrow");
   const [amount, setAmount] = useState("");

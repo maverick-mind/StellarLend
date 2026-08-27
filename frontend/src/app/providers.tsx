@@ -292,38 +292,25 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   }, [address]);
 
   useEffect(() => {
-    if (address) {
-      refreshBalances();
-    }
-  }, [address, refreshBalances]);
-
-  // Connect via Freighter extension
-  const connectFreighter = useCallback(async () => {
-    setIsConnecting(true);
-    try {
-      const freighter = await import("@stellar/freighter-api");
-      const accessObj = await freighter.requestAccess();
-      if (accessObj && accessObj.address) {
-        setAddress(accessObj.address);
-        setSecretKey(null);
-        setWalletType("freighter");
-        // Check if funded on testnet, if not auto-fund with friendbot
-        try {
-          const server = new StellarSdk.Horizon.Server(HORIZON_URL);
-          await server.loadAccount(accessObj.address);
-        } catch {
-          await fetch(`https://friendbot.stellar.org?addr=${encodeURIComponent(accessObj.address)}`);
+    if (!address) return;
+    let isSubscribed = true;
+    const loadBal = async () => {
+      try {
+        const server = new StellarSdk.Horizon.Server(HORIZON_URL);
+        const account = await server.loadAccount(address);
+        const nativeBalance = account.balances.find((b) => b.asset_type === "native");
+        if (nativeBalance && isSubscribed) {
+          setXlmBalance(parseFloat(nativeBalance.balance));
         }
-      } else {
-        throw new Error("User declined Freighter connection");
+      } catch {
+        // Account might be newly created
       }
-    } catch (err) {
-      console.warn("Freighter connection issue, falling back to Browser Keypair:", err);
-      await connectBrowserWallet();
-    } finally {
-      setIsConnecting(false);
-    }
-  }, []);
+    };
+    loadBal();
+    return () => {
+      isSubscribed = false;
+    };
+  }, [address]);
 
   // Connect via In-Browser Testnet Keypair
   const connectBrowserWallet = useCallback(async () => {
@@ -371,6 +358,34 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       setIsConnecting(false);
     }
   }, []);
+
+  // Connect via Freighter extension
+  const connectFreighter = useCallback(async () => {
+    setIsConnecting(true);
+    try {
+      const freighter = await import("@stellar/freighter-api");
+      const accessObj = await freighter.requestAccess();
+      if (accessObj && accessObj.address) {
+        setAddress(accessObj.address);
+        setSecretKey(null);
+        setWalletType("freighter");
+        // Check if funded on testnet, if not auto-fund with friendbot
+        try {
+          const server = new StellarSdk.Horizon.Server(HORIZON_URL);
+          await server.loadAccount(accessObj.address);
+        } catch {
+          await fetch(`https://friendbot.stellar.org?addr=${encodeURIComponent(accessObj.address)}`);
+        }
+      } else {
+        throw new Error("User declined Freighter connection");
+      }
+    } catch (err) {
+      console.warn("Freighter connection issue, falling back to Browser Keypair:", err);
+      await connectBrowserWallet();
+    } finally {
+      setIsConnecting(false);
+    }
+  }, [connectBrowserWallet]);
 
   const connect = useCallback(async () => {
     await connectFreighter();

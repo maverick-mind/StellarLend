@@ -26,6 +26,11 @@ export default function GovernancePage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
+  const currentTime = React.useSyncExternalStore(
+    () => () => {},
+    () => Date.now(),
+    () => 0
+  );
 
   const handleVote = async (proposalId: number, support: boolean) => {
     if (!isConnected) {
@@ -147,7 +152,7 @@ export default function GovernancePage() {
             const totalVotes = proposal.votesFor + proposal.votesAgainst;
             const forPercent = totalVotes > 0 ? (proposal.votesFor / totalVotes) * 100 : 0;
             const againstPercent = 100 - forPercent;
-            const timeLeft = proposal.endTime - Date.now();
+            const timeLeft = currentTime > 0 ? proposal.endTime - currentTime : 86400000;
             const isActive = proposal.status === "Active" && timeLeft > 0;
 
             return (
