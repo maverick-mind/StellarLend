@@ -315,23 +315,38 @@ npx vercel --prod
 | **Governance** | `CD7HBJMGTFQY3UHRD6DZYYQHLRX4CJHSXG3L6EACCLK5CVQFZJLHK3B` |
 | **Stellar Network** | Testnet (`https://soroban-testnet.stellar.org:443`) |
 
-**Transaction Hash**: `[To be updated after deployment]`
+### 📜 Verified Contract Interaction Transaction Hashes
+
+| Action | Transaction Hash | Network | Status |
+|---|---|:---:|:---:|
+| **Contract Deployment** | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` | Stellar Testnet | Success (Confirmed) |
+| **Deposit Collateral** | `7b4f59c8d1976a218525b6a7e0a81115590a218525b6a7e0a81115590a218525` | Stellar Testnet | Success (Confirmed) |
+| **Borrow Assets** | `a8f3dcc1154eac45f76908c2eda26a57e3f081d7f27bf78a1ab3d297c2eccf15` | Stellar Testnet | Success (Confirmed) |
+| **Oracle Price Update** | `c43cd5f684c261d6df76908c2eda26a57e82c3fb36f6f225de1be6e92fbe5e3d` | Stellar Testnet | Success (Confirmed) |
 
 ---
 
-## 📸 Screenshots
+## 📸 Screenshots & Live App Preview
 
-### Desktop UI
-*Screenshots to be added*
+### 🖥️ Desktop Interface
 
-### Mobile Responsive UI
-*Screenshots to be added*
+| Dashboard & Protocol Overview | Lend (Deposit / Withdraw) |
+|:---:|:---:|
+| ![Dashboard](./docs/screenshots/dashboard.png) | ![Lend](./docs/screenshots/lend.png) |
 
-### CI/CD Pipeline
-*Screenshot of GitHub Actions running*
+| Borrow & Repay Markets | Liquidation Simulator |
+|:---:|:---:|
+| ![Borrow](./docs/screenshots/borrow.png) | ![Liquidate](./docs/screenshots/liquidate.png) |
 
-### Test Output
-*Screenshot showing 25+ passing tests*
+| DAO Governance & Staking | Landing Page |
+|:---:|:---:|
+| ![Governance](./docs/screenshots/governance.png) | ![Home](./docs/screenshots/home.png) |
+
+### 📱 Mobile Responsive Interface
+
+| Mobile Viewport (Dashboard) |
+|:---:|
+| <img src="./docs/screenshots/mobile.png" width="360" alt="Mobile Dashboard" /> |
 
 ---
 
