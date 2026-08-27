@@ -99,7 +99,7 @@ export default function BorrowPage() {
           <div className="input-group" style={{ marginBottom: "16px" }}>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <label className="input-label">Amount (USDC)</label>
-              <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+              <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }} suppressHydrationWarning>
                 {activeTab === "borrow"
                   ? `Available Limit: ${formatUSD(available)}`
                   : `Owed Debt: ${formatUSD(currentBorrowed)}`}

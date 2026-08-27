@@ -94,9 +94,9 @@ export default function LendPage() {
               }}
             >
               <label className="input-label">Amount (USDC)</label>
-              <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+              <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }} suppressHydrationWarning>
                 {activeTab === "deposit" ? "Wallet Balance" : "Deposited"}:{" "}
-                <strong style={{ color: "var(--text-primary)" }}>{formatUSD(availableBalance)}</strong>
+                <strong style={{ color: "var(--text-primary)" }} suppressHydrationWarning>{formatUSD(availableBalance)}</strong>
               </span>
             </div>
             <div className="input-with-max">
