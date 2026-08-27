@@ -40,7 +40,11 @@ jobs:
             ${{ runner.os }}-cargo-
 
       - name: 🧪 Run contract tests
-        run: cargo test --workspace --verbose
+        run: |
+          cargo update -p ed25519-dalek --precise 2.1.1 || true
+          cargo update -p curve25519-dalek --precise 4.1.3 || true
+          cargo update -p rand_core --precise 0.6.4 || true
+          cargo test --workspace --verbose
 
       - name: 🔨 Build WASM contracts
         run: |

@@ -13,5 +13,7 @@ soroban-token-sdk = { workspace = true }
 [dev-dependencies]
 soroban-sdk = { workspace = true, features = ["testutils"] }
 ed25519-dalek = { workspace = true }
+curve25519-dalek = { workspace = true }
+rand_core = { workspace = true }
 stellar-lend-token = { path = "../token" }
 stellar-lend-price-oracle = { path = "../price_oracle" }
