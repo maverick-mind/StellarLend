@@ -497,29 +497,35 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
           submittedHash = res.hash;
         }
 
-        // 4. Update UI State with new values
+        // 4. Update UI State cleanly (separate state updates to prevent StrictMode double execution)
+        if (action === "deposit") {
+          setTokenBalance((t) => Math.max(0, t - amount));
+        } else if (action === "withdraw") {
+          setTokenBalance((t) => t + amount);
+        } else if (action === "borrow") {
+          setTokenBalance((t) => t + amount);
+        } else if (action === "repay") {
+          setTokenBalance((t) => Math.max(0, t - amount));
+        } else if (action === "liquidate") {
+          setTokenBalance((t) => t + amount * 0.05);
+        } else if (action === "stake") {
+          setStakedGovBalance((s) => s + amount);
+        } else if (action === "unstake") {
+          setStakedGovBalance((s) => Math.max(0, s - amount));
+        }
+
         setUserPosition((prev) => {
           let newDeposited = prev.deposited;
           let newBorrowed = prev.borrowed;
 
           if (action === "deposit") {
             newDeposited += amount;
-            setTokenBalance((t) => Math.max(0, t - amount));
           } else if (action === "withdraw") {
             newDeposited = Math.max(0, newDeposited - amount);
-            setTokenBalance((t) => t + amount);
           } else if (action === "borrow") {
             newBorrowed += amount;
-            setTokenBalance((t) => t + amount);
           } else if (action === "repay") {
             newBorrowed = Math.max(0, newBorrowed - amount);
-            setTokenBalance((t) => Math.max(0, t - amount));
-          } else if (action === "liquidate") {
-            setTokenBalance((t) => t + amount * 0.05);
-          } else if (action === "stake") {
-            setStakedGovBalance((s) => s + amount);
-          } else if (action === "unstake") {
-            setStakedGovBalance((s) => Math.max(0, s - amount));
           }
 
           const collateralValue = newDeposited;
