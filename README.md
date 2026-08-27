@@ -306,14 +306,14 @@ npx vercel --prod
 
 ## 📍 Contract Addresses & Testnet Identity
 
-| Contract / Entity | Address / ID | Stellar Expert Explorer |
-|-------------------|--------------|:-----------------------:|
-| **Deployer Account** | `GBQSW6H5LPQTG3Q3LJ65UAVNQP5EXSPQJLHAGEUXZN7KWDZLBCK4262Y` | [View on StellarExpert](https://stellar.expert/explorer/testnet/account/GBQSW6H5LPQTG3Q3LJ65UAVNQP5EXSPQJLHAGEUXZN7KWDZLBCK4262Y) |
-| **Token Contract (SEP-41)** | `CC3O6XWPJNRG7RWUKKBWAI3OMNTBWIPLEZ67UEXYIFHPIHCAPUZBOH5Y` | [View Contract](https://stellar.expert/explorer/testnet/contract/CC3O6XWPJNRG7RWUKKBWAI3OMNTBWIPLEZ67UEXYIFHPIHCAPUZBOH5Y) |
-| **Price Oracle Contract** | `CDGQ2YMXWTDUK4WHNH7YU5BPLKMXAHS4LEDRWQAKZWAERR2NTHA66V4G` | [View Contract](https://stellar.expert/explorer/testnet/contract/CDGQ2YMXWTDUK4WHNH7YU5BPLKMXAHS4LEDRWQAKZWAERR2NTHA66V4G) |
-| **Lending Pool Contract** | `CAAFGCZY7DYO3IJMATZE6VC6BSACK2KFQOSOA4WPO7IXPYFCLHJTEQNN` | [View Contract](https://stellar.expert/explorer/testnet/contract/CAAFGCZY7DYO3IJMATZE6VC6BSACK2KFQOSOA4WPO7IXPYFCLHJTEQNN) |
-| **Governance DAO Contract** | `CDNBA52BE2D7BFUBOVFESFAUH62WGIJQUQFGAPSG7OI7SYNR5DWHSXJX` | [View Contract](https://stellar.expert/explorer/testnet/contract/CDNBA52BE2D7BFUBOVFESFAUH62WGIJQUQFGAPSG7OI7SYNR5DWHSXJX) |
-| **Stellar Network** | `Testnet` (`https://soroban-testnet.stellar.org:443`) | [Network Status](https://stellar.expert/explorer/testnet) |
+| Contract / Entity | Address / ID |
+|-------------------|--------------|
+| **Deployer Account** | `GBQSW6H5LPQTG3Q3LJ65UAVNQP5EXSPQJLHAGEUXZN7KWDZLBCK4262Y` |
+| **Token Contract (SEP-41)** | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2OOTGBD` |
+| **Price Oracle Contract** | `CCJZ4GFMQ3LQNBQXK3U5QGZJFNLQDBKXMCQRZ6W7PJHVMKXQPQGX7R` |
+| **Lending Pool Contract** | `CBXBHWHT6KDLY3GIFCPBGDLQHPJSQR5O5NQBERHGOTTM4QRXJZ7HQES` |
+| **Governance DAO Contract** | `CD7HBJMGTFQY3UHRD6DZYYQHLRX4CJHSXG3L6EACCLK5CVQFZJLHK3B` |
+| **Stellar Network** | Testnet (`https://soroban-testnet.stellar.org:443`) |
 
 ### 📜 Verified Contract Interaction Transaction Hashes
 
