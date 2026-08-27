@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { WalletProvider, ToastProvider } from "./providers";
 import Navbar from "./components/Navbar";
+import ClientOnly from "./components/ClientOnly";
 
 export const metadata: Metadata = {
   title: "StellarLend | DeFi Lending Protocol on Stellar",
@@ -23,12 +24,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
-        <WalletProvider>
-          <ToastProvider>
-            <Navbar />
-            <main>{children}</main>
-          </ToastProvider>
-        </WalletProvider>
+        <ClientOnly>
+          <WalletProvider>
+            <ToastProvider>
+              <Navbar />
+              <main>{children}</main>
+            </ToastProvider>
+          </WalletProvider>
+        </ClientOnly>
       </body>
     </html>
   );
