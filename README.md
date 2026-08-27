@@ -9,7 +9,7 @@
 
 **A production-ready, end-to-end decentralized lending and borrowing protocol built on Stellar's Soroban smart contract platform.**
 
-[🌐 Live Demo](https://stellarlend.vercel.app) • [📹 Demo Video](https://your-demo-video-link) • [📄 Documentation](./docs/ARCHITECTURE.md)
+[🌐 Live Demo](https://stellarlend.vercel.app) • [📹 Demo Video](https://drive.google.com/file/d/1X72vJyD0TAwbE7IxM9hgSnkagSK1K9PF/view?usp=sharing) • [📄 Documentation](./docs/ARCHITECTURE.md)
 
 </div>
 
